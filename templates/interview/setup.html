@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Start Interview{% endblock %}
+{% block page_title %}<i class="fas fa-microphone-alt" style="color:var(--accent)"></i> Start Mock Interview{% endblock %}
+
+{% block extra_css %}
+<style>
+.setup-wrap{max-width:680px;margin:0 auto}
+.setup-hero{text-align:center;margin-bottom:36px}
+.setup-hero h2{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:10px}
+.setup-hero p{color:var(--text2);font-size:15px}
+.domain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:28px}
+.domain-card{padding:18px;background:var(--card);border:2px solid var(--border);border-radius:16px;cursor:pointer;transition:.3s;text-align:center;position:relative}
+.domain-card:hover{border-color:var(--primary);transform:translateY(-3px)}
+.domain-card.selected{border-color:var(--primary);background:rgba(108,99,255,0.12);box-shadow:0 0 0 3px rgba(108,99,255,0.15)}
+.domain-card input{position:absolute;opacity:0;pointer-events:none}
+.domain-icon{font-size:28px;margin-bottom:10px;display:block}
+.domain-label{font-size:13px;font-weight:700}
+.diff-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px}
+.diff-card{padding:16px;background:var(--card);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:.3s;text-align:center}
+.diff-card:hover{transform:translateY(-2px)}
+.diff-card.easy.selected{border-color:var(--success);background:rgba(34,211,165,0.08)}
+.diff-card.medium.selected{border-color:var(--warning);background:rgba(245,158,11,0.08)}
+.diff-card.hard.selected{border-color:var(--danger);background:rgba(239,68,68,0.08)}
+.diff-card input{position:absolute;opacity:0;pointer-events:none}
+.diff-icon{font-size:24px;margin-bottom:8px;display:block}
+.diff-label{font-size:13px;font-weight:700}
+.diff-desc{font-size:11px;color:var(--text3);margin-top:4px}
+.tips-box{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(67,232,216,0.06));border:1px solid rgba(108,99,255,0.25);border-radius:14px;padding:18px 22px;margin-bottom:24px}
+.tips-box h4{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:10px}
+.tips-box li{font-size:13px;color:var(--text2);padding:3px 0;list-style:none;display:flex;align-items:center;gap:8px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="setup-wrap">
+  <div class="setup-hero">
+    <h2>Configure Your <span style="background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Mock Interview</span></h2>
+    <p>Choose your domain and difficulty level to begin an AI-powered interview simulation</p>
+  </div>
+
+  <form method="POST" action="{% url 'start_interview' %}">
+    {% csrf_token %}
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title" style="margin-bottom:16px"><i class="fas fa-layer-group"></i> Select Domain</div>
+      <div class="domain-grid">
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="software_engineering" required>
+          <span class="domain-icon">💻</span><div class="domain-label">Software Engineering</div>
+        </label>
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="data_science">
+          <span class="domain-icon">📊</span><div class="domain-label">Data Science</div>
+        </label>
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="web_development">
+          <span class="domain-icon">🌐</span><div class="domain-label">Web Development</div>
+        </label>
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="machine_learning">
+          <span class="domain-icon">🤖</span><div class="domain-label">Machine Learning</div>
+        </label>
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="system_design">
+          <span class="domain-icon">🏗️</span><div class="domain-label">System Design</div>
+        </label>
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="behavioral">
+          <span class="domain-icon">🧠</span><div class="domain-label">Behavioral</div>
+        </label>
+        <label class="domain-card" onclick="selectDomain(this)">
+          <input type="radio" name="domain" value="hr">
+          <span class="domain-icon">🤝</span><div class="domain-label">HR Round</div>
+        </label>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title" style="margin-bottom:16px"><i class="fas fa-signal"></i> Select Difficulty</div>
+      <div class="diff-row">
+        <label class="diff-card easy" onclick="selectDiff(this)">
+          <input type="radio" name="difficulty" value="easy">
+          <span class="diff-icon">🌱</span>
+          <div class="diff-label" style="color:var(--success)">Easy</div>
+          <div class="diff-desc">Fresher / Entry level</div>
+        </label>
+        <label class="diff-card medium" onclick="selectDiff(this)">
+          <input type="radio" name="difficulty" value="medium" checked>
+          <span class="diff-icon">🔥</span>
+          <div class="diff-label" style="color:var(--warning)">Medium</div>
+          <div class="diff-desc">1–3 years experience</div>
+        </label>
+        <label class="diff-card hard" onclick="selectDiff(this)">
+          <input type="radio" name="difficulty" value="hard">
+          <span class="diff-icon">⚡</span>
+          <div class="diff-label" style="color:var(--danger)">Hard</div>
+          <div class="diff-desc">Senior / Expert level</div>
+        </label>
+      </div>
+    </div>
+
+    <div class="tips-box">
+      <h4><i class="fas fa-lightbulb"></i> Interview Tips</h4>
+      <ul>
+        <li><i class="fas fa-check" style="color:var(--success)"></i> Find a quiet environment with good lighting</li>
+        <li><i class="fas fa-check" style="color:var(--success)"></i> Enable your camera for a realistic experience</li>
+        <li><i class="fas fa-check" style="color:var(--success)"></i> Think aloud — the AI evaluates your thought process</li>
+        <li><i class="fas fa-check" style="color:var(--success)"></i> Use STAR method for behavioral questions</li>
+        <li><i class="fas fa-check" style="color:var(--success)"></i> You'll answer 7 questions — each evaluated instantly</li>
+      </ul>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg w-100" style="justify-content:center">
+      <i class="fas fa-play"></i> Start Interview Now
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectDomain(el) {
+  document.querySelectorAll('.domain-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectDiff(el) {
+  document.querySelectorAll('.diff-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+// Pre-select medium
+document.querySelector('.diff-card.medium').classList.add('selected');
+</script>
+{% endblock %}

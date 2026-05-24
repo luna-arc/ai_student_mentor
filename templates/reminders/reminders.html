@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Reminders{% endblock %}
+{% block page_title %}<i class="fas fa-bell" style="color:var(--warning)"></i> Smart Reminders{% endblock %}
+
+{% block extra_css %}
+<style>
+.r-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;transition:.3s;position:relative;overflow:hidden}
+.r-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.r-card.high::before{background:var(--danger)}
+.r-card.medium::before{background:var(--warning)}
+.r-card.low::before{background:var(--success)}
+.r-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.25)}
+.r-card.overdue{border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.04)}
+.r-type-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.r-body{flex:1;min-width:0}
+.r-title-row{display:flex;align-items:center;gap:10px}
+.r-title{font-size:14px;font-weight:700}
+.r-desc{font-size:12px;color:var(--text2);margin-top:3px}
+.r-meta{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap}
+.r-time-label{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.r-actions{display:flex;gap:8px;flex-shrink:0}
+.overdue-badge{background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.3);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:480px;width:100%;animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.type-icons{study:'📚',interview_practice:'🎤',assignment:'📝',revision:'🔄',custom:'⭐'}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:12px;margin-bottom:24px;align-items:center">
+  <div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px">Your Reminders</h2>
+    <p style="color:var(--text2);font-size:13px">{{ pending_reminders.count }} pending</p>
+  </div>
+  <div style="flex:1"></div>
+  <button class="btn btn-primary" onclick="document.getElementById('add-modal').classList.add('show')">
+    <i class="fas fa-plus"></i> Add Reminder
+  </button>
+</div>
+
+<!-- Pending -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-clock"></i> Pending Reminders</div>
+    <span class="badge badge-warning">{{ pending_reminders.count }}</span>
+  </div>
+  {% if pending_reminders %}
+    {% for r in pending_reminders %}
+    <div class="r-card {{ r.priority }} {% if r.is_overdue %}overdue{% endif %}" id="r-{{ r.id }}">
+      <div class="r-type-icon" style="background:{% if r.reminder_type == 'study' %}rgba(108,99,255,0.15);color:var(--primary){% elif r.reminder_type == 'interview_practice' %}rgba(67,232,216,0.15);color:var(--accent){% elif r.reminder_type == 'assignment' %}rgba(239,68,68,0.15);color:var(--danger){% else %}rgba(245,158,11,0.15);color:var(--warning){% endif %}">
+        {% if r.reminder_type == 'study' %}<i class="fas fa-book"></i>
+        {% elif r.reminder_type == 'interview_practice' %}<i class="fas fa-microphone-alt"></i>
+        {% elif r.reminder_type == 'assignment' %}<i class="fas fa-file-alt"></i>
+        {% elif r.reminder_type == 'revision' %}<i class="fas fa-sync"></i>
+        {% else %}<i class="fas fa-star"></i>{% endif %}
+      </div>
+      <div class="r-body">
+        <div class="r-title-row">
+          <span class="r-title">{{ r.title }}</span>
+          {% if r.is_overdue %}<span class="overdue-badge">OVERDUE</span>{% endif %}
+        </div>
+        {% if r.description %}<div class="r-desc">{{ r.description|truncatechars:80 }}</div>{% endif %}
+        <div class="r-meta">
+          <span class="r-time-label"><i class="fas fa-calendar-alt"></i> {{ r.due_datetime|date:"M d, Y H:i" }}</span>
+          <span class="badge badge-{% if r.priority == 'high' %}danger{% elif r.priority == 'medium' %}warning{% else %}success{% endif %}">{{ r.priority|title }}</span>
+          <span class="badge badge-primary">{{ r.get_reminder_type_display }}</span>
+          {% if r.repeat != 'none' %}<span class="badge badge-info"><i class="fas fa-redo"></i> {{ r.get_repeat_display }}</span>{% endif %}
+        </div>
+      </div>
+      <div class="r-actions">
+        <button class="btn btn-success btn-icon" title="Mark Done" onclick="completeReminder({{ r.id }})"><i class="fas fa-check"></i></button>
+        <button class="btn btn-danger btn-icon" title="Delete" onclick="deleteReminder({{ r.id }})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state"><i class="fas fa-bell-slash"></i><p>No pending reminders. Add one to stay organized!</p></div>
+  {% endif %}
+</div>
+
+<!-- Completed -->
+{% if completed_reminders %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-check-circle" style="color:var(--success)"></i> Completed</div>
+  </div>
+  {% for r in completed_reminders %}
+  <div class="r-card" style="opacity:.6">
+    <div class="r-type-icon" style="background:rgba(34,211,165,0.1);color:var(--success)"><i class="fas fa-check"></i></div>
+    <div class="r-body">
+      <div class="r-title" style="text-decoration:line-through;color:var(--text3)">{{ r.title }}</div>
+      <div class="r-time-label" style="margin-top:4px"><i class="fas fa-calendar-check"></i> Due: {{ r.due_datetime|date:"M d, Y H:i" }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Add Modal -->
+<div class="modal" id="add-modal">
+  <div class="modal-card">
+    <div class="modal-title"><i class="fas fa-bell" style="color:var(--warning)"></i> Add Reminder</div>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input name="title" class="form-control" placeholder="e.g. Study Python for 2 hours" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="2" placeholder="Optional details..."></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select name="reminder_type" class="form-control">
+            <option value="study">📚 Study Session</option>
+            <option value="interview_practice">🎤 Interview Practice</option>
+            <option value="assignment">📝 Assignment</option>
+            <option value="revision">🔄 Revision</option>
+            <option value="custom">⭐ Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select name="priority" class="form-control">
+            <option value="low">🟢 Low</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date & Time *</label>
+        <input name="due_datetime" type="datetime-local" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Repeat</label>
+        <select name="repeat" class="form-control">
+          <option value="none">No Repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-modal').classList.remove('show')" style="flex:1">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="flex:2"><i class="fas fa-bell"></i> Create Reminder</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('add-modal').addEventListener('click', function(e){
+  if(e.target===this) this.classList.remove('show');
+});
+// Set min datetime to now
+const dtInput = document.querySelector('input[name="due_datetime"]');
+if(dtInput) dtInput.min = new Date().toISOString().slice(0,16);
+
+async function completeReminder(id) {
+  await fetch(`/reminders/complete/${id}/`, {headers:{'X-CSRFToken':csrfToken()}});
+  const el = document.getElementById(`r-${id}`);
+  if(el) { el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='.4s'; setTimeout(()=>el.remove(),400); }
+  showToast('Reminder marked as done! ✅','success');
+}
+async function deleteReminder(id) {
+  if(!confirm('Delete this reminder?')) return;
+  await fetch(`/reminders/delete/${id}/`, {headers:{'X-CSRFToken':csrfToken()}});
+  const el = document.getElementById(`r-${id}`);
+  if(el) { el.style.opacity='0'; setTimeout(()=>el.remove(),300); }
+  showToast('Reminder deleted','info');
+}
+</script>
+{% endblock %}

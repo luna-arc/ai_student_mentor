@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% block title %}AI Mentor Chat{% endblock %}
+{% block page_title %}<i class="fas fa-robot" style="color:var(--primary)"></i> AI Mentor Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Remove content padding so chat fills full height */
+.content{padding:0 !important}
+
+.chat-layout{display:grid;grid-template-columns:260px 1fr;gap:0;height:calc(100vh - 62px);background:var(--card);border:1px solid var(--border);border-radius:0;overflow:hidden;position:relative}
+.chat-sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg2);overflow:hidden;height:100%}
+.chat-sidebar-head{padding:16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-sidebar-head h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px}
+.new-chat-btn{width:100%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:.2s}
+.new-chat-btn:hover{opacity:.9}
+.session-list{flex:1;overflow-y:auto;padding:8px}
+.session-item{padding:10px 12px;border-radius:10px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:10px;position:relative;text-decoration:none;color:var(--text2)}
+.session-item:hover{background:var(--bg3);color:var(--text)}
+.session-item.active{background:rgba(108,99,255,0.15);color:var(--primary)}
+.session-icon{width:32px;height:32px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.session-info{flex:1;min-width:0}
+.session-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.session-time{font-size:10px;color:var(--text3);margin-top:2px}
+.session-delete{opacity:0;color:var(--text3);font-size:12px;padding:4px;border-radius:5px;border:none;background:none;cursor:pointer;transition:.2s;flex-shrink:0}
+.session-item:hover .session-delete{opacity:1}
+.session-delete:hover{color:var(--danger);background:rgba(239,68,68,0.1)}
+.chat-main{display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0}
+.chat-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ai-avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;position:relative}
+.ai-online{position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;background:var(--success);border-radius:50%;border:2px solid var(--card)}
+.chat-header-info h3{font-size:14px;font-weight:700}
+.chat-header-info p{font-size:11px;color:var(--text3)}
+.chat-category{margin-left:auto}
+.messages{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:flex;flex-direction:column;gap:16px;min-height:0;scroll-behavior:smooth}
+.msg{display:flex;gap:12px;max-width:80%;animation:msgIn .3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse;align-self:flex-end}
+.msg-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.msg.assistant .msg-avatar{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff}
+.msg.user .msg-avatar{background:linear-gradient(135deg,var(--secondary),var(--warning));color:#fff}
+.msg-bubble{padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.7;max-width:100%}
+.msg.assistant .msg-bubble{background:var(--bg3);border:1px solid var(--border);border-top-left-radius:4px}
+.msg.user .msg-bubble{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-top-right-radius:4px}
+.msg-time{font-size:10px;color:var(--text3);margin-top:6px;text-align:right}
+.msg-content{flex:1}
+/* Markdown-like formatting */
+.msg-bubble code{background:rgba(0,0,0,0.15);padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace}
+.msg-bubble pre{background:rgba(0,0,0,0.15);padding:12px;border-radius:8px;overflow-x:auto;font-size:12px;margin:8px 0;font-family:monospace;white-space:pre-wrap;word-break:break-word}
+.msg.assistant .msg-bubble strong{color:var(--accent);font-weight:700}
+.msg.user .msg-bubble strong{color:#fff;font-weight:700}
+.msg-bubble em{font-style:italic}
+.msg-bubble ul,.msg-bubble ol{padding-left:20px;margin:6px 0}
+.msg-bubble li{margin:3px 0}
+.msg-bubble br{line-height:1.8}
+/* Fix message bubble width */
+.msg.assistant{max-width:82%;align-self:flex-start}
+.msg.user{max-width:72%;align-self:flex-end}
+.msg-content{flex:1;min-width:0}
+.chat-input-area{padding:16px 20px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+.input-row{display:flex;gap:10px;align-items:flex-end}
+.chat-textarea{flex:1;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;font-family:inherit;resize:none;outline:none;max-height:120px;min-height:48px;transition:.2s;line-height:1.5}
+.chat-textarea:focus{border-color:var(--primary)}
+.chat-textarea::placeholder{color:var(--text3)}
+.send-btn{width:48px;height:48px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:.2s;flex-shrink:0}
+.send-btn:hover{transform:scale(1.05)}
+.send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.category-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);color:var(--text2);background:none;font-family:inherit;transition:.2s}
+.chip:hover,.chip.active{border-color:var(--primary);color:var(--primary);background:rgba(108,99,255,0.1)}
+.typing-dots span{display:inline-block;width:7px;height:7px;background:var(--text3);border-radius:50%;margin:0 2px;animation:dot .8s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{transform:scale(0.8);opacity:.5}40%{transform:scale(1.1);opacity:1}}
+.empty-chat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;gap:12px}
+.empty-chat-icon{width:72px;height:72px;background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(67,232,216,0.1));border:1px solid rgba(108,99,255,0.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--primary)}
+.empty-chat h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
+.empty-chat p{color:var(--text2);font-size:14px;max-width:320px}
+.suggestion-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.sug-chip{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;transition:.2s;color:var(--text2)}
+.sug-chip:hover{border-color:var(--primary);color:var(--primary);background:rgba(108,99,255,0.08)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+  <!-- Sidebar -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-head">
+      <h3>Chat History</h3>
+      <button class="new-chat-btn" onclick="createNewSession()"><i class="fas fa-plus"></i> New Chat</button>
+    </div>
+    <div class="session-list" id="session-list">
+      {% for s in sessions %}
+      <div class="session-item {% if active_session and s.id == active_session.id %}active{% endif %}" onclick="loadSession({{ s.id }})" id="session-{{ s.id }}">
+        <div class="session-icon">
+          {% if s.category == 'academic' %}<i class="fas fa-book" style="color:var(--primary)"></i>
+          {% elif s.category == 'interview_prep' %}<i class="fas fa-microphone-alt" style="color:var(--accent)"></i>
+          {% else %}<i class="fas fa-comments" style="color:var(--secondary)"></i>{% endif %}
+        </div>
+        <div class="session-info">
+          <div class="session-title">{{ s.title }}</div>
+          <div class="session-time">{{ s.updated_at|timesince }} ago</div>
+        </div>
+        <button class="session-delete" onclick="deleteSession(event, {{ s.id }})"><i class="fas fa-trash"></i></button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Chat Main -->
+  <div class="chat-main" id="chat-main">
+    <div class="chat-header">
+      <div class="ai-avatar"><i class="fas fa-robot"></i><div class="ai-online"></div></div>
+      <div class="chat-header-info">
+        <h3>EduBot AI Mentor</h3>
+        <p id="chat-status">Online — Ready to help you learn</p>
+      </div>
+      <div class="chat-category">
+        <select id="category-select" class="form-control" style="width:auto;font-size:12px;padding:6px 12px">
+          <option value="academic">📚 Academic</option>
+          <option value="interview_prep">🎤 Interview Prep</option>
+          <option value="career">💼 Career</option>
+          <option value="general">💬 General</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="messages" id="messages-container">
+      {% if active_session and messages_list %}
+        {% for msg in messages_list %}
+        <div class="msg {{ msg.role }}">
+          <div class="msg-avatar">{% if msg.role == 'assistant' %}<i class="fas fa-robot"></i>{% else %}{{ request.user.username|first|upper }}{% endif %}</div>
+          <div class="msg-content">
+            <div class="msg-bubble" id="mb-{{ forloop.counter }}">{{ msg.content }}</div>
+            <div class="msg-time">{{ msg.timestamp|date:"H:i" }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-chat" id="empty-chat">
+        <div class="empty-chat-icon"><i class="fas fa-robot"></i></div>
+        <h3>Hello! I'm EduBot 👋</h3>
+        <p>Your personal AI academic mentor. Ask me anything about your studies, career, or interview prep!</p>
+        <div class="suggestion-chips">
+          <div class="sug-chip" onclick="quickAsk('Explain machine learning algorithms')">🤖 Machine Learning</div>
+          <div class="sug-chip" onclick="quickAsk('How to prepare for a technical interview?')">🎤 Interview Tips</div>
+          <div class="sug-chip" onclick="quickAsk('Explain Big O notation with examples')">📊 Big O Notation</div>
+          <div class="sug-chip" onclick="quickAsk('What skills should I learn for data science?')">📈 Data Science Path</div>
+          <div class="sug-chip" onclick="quickAsk('Explain React hooks with examples')">⚛️ React Hooks</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-row">
+        <textarea class="chat-textarea" id="message-input" placeholder="Ask me anything — academics, interview prep, career advice..." rows="1"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSessionId = {% if active_session %}{{ active_session.id }}{% else %}null{% endif %};
+
+// Auto-resize textarea
+const ta = document.getElementById('message-input');
+ta.addEventListener('input', () => {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+});
+ta.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function scrollToBottom() {
+  const c = document.getElementById('messages-container');
+  c.scrollTop = c.scrollHeight;
+}
+scrollToBottom();
+
+// Render markdown-like formatting
+function renderContent(text) {
+  return text
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
+    .replace(/^[\-\*]\s+(.+)$/gm, '• $1')
+    .replace(/^\d+\.\s+(.+)$/gm, (m, p) => m)
+    .replace(/\n/g, '<br>');
+}
+
+function addMessage(role, content, time) {
+  const ec = document.getElementById('empty-chat');
+  if (ec) ec.remove();
+
+  const c = document.getElementById('messages-container');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="msg-avatar">${role === 'assistant' ? '<i class="fas fa-robot"></i>' : '{{ request.user.username|first|upper }}'}</div>
+    <div class="msg-content">
+      <div class="msg-bubble">${role === 'assistant' ? renderContent(content) : content}</div>
+      <div class="msg-time">${time || new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`;
+  c.appendChild(div);
+  scrollToBottom();
+}
+
+function addTyping() {
+  const c = document.getElementById('messages-container');
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-avatar"><i class="fas fa-robot"></i></div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+  c.appendChild(div);
+  scrollToBottom();
+}
+
+async function createNewSession() {
+  const cat = document.getElementById('category-select').value;
+  const res = await fetch('{% url "new_chat" %}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken()},
+    body: `category=${cat}&title=New Chat`
+  });
+  const data = await res.json();
+  currentSessionId = data.session_id;
+
+  const list = document.getElementById('session-list');
+  const item = document.createElement('div');
+  item.className = 'session-item active';
+  item.id = `session-${data.session_id}`;
+  item.innerHTML = `<div class="session-icon"><i class="fas fa-comments" style="color:var(--secondary)"></i></div><div class="session-info"><div class="session-title">${data.title}</div><div class="session-time">just now</div></div><button class="session-delete" onclick="deleteSession(event,${data.session_id})"><i class="fas fa-trash"></i></button>`;
+  item.onclick = () => loadSession(data.session_id);
+  document.querySelectorAll('.session-item').forEach(i=>i.classList.remove('active'));
+  list.prepend(item);
+
+  const c = document.getElementById('messages-container');
+  c.innerHTML = `<div class="empty-chat" id="empty-chat">
+    <div class="empty-chat-icon"><i class="fas fa-robot"></i></div>
+    <h3>New Chat Started!</h3>
+    <p>Ask me anything...</p></div>`;
+}
+
+async function loadSession(sid) {
+  currentSessionId = sid;
+  document.querySelectorAll('.session-item').forEach(i=>i.classList.remove('active'));
+  const el = document.getElementById(`session-${sid}`);
+  if (el) el.classList.add('active');
+  const res = await fetch(`/chat/session/${sid}/`);
+  const data = await res.json();
+  const c = document.getElementById('messages-container');
+  c.innerHTML = '';
+  if (data.messages.length === 0) {
+    c.innerHTML = '<div class="empty-chat" id="empty-chat"><div class="empty-chat-icon"><i class="fas fa-robot"></i></div><h3>No messages yet</h3><p>Start asking!</p></div>';
+  } else {
+    data.messages.forEach(m => addMessage(m.role, m.content, m.time));
+  }
+  document.getElementById('chat-status').textContent = data.category;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('message-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (!currentSessionId) await createNewSession();
+
+  input.value = '';
+  input.style.height = '48px';
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  document.getElementById('chat-status').textContent = 'Thinking...';
+
+  addMessage('user', msg);
+  addTyping();
+
+  try {
+    const res = await fetch('{% url "send_message" %}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+      body: JSON.stringify({session_id: currentSessionId, message: msg})
+    });
+    const data = await res.json();
+    document.getElementById('typing-indicator')?.remove();
+    if (data.message) {
+      addMessage('assistant', data.message, data.timestamp);
+    } else {
+      addMessage('assistant', '⚠️ ' + (data.error || 'Something went wrong'));
+    }
+  } catch (err) {
+    document.getElementById('typing-indicator')?.remove();
+    addMessage('assistant', '⚠️ Network error. Please try again.');
+  }
+  btn.disabled = false;
+  document.getElementById('chat-status').textContent = 'Online — Ready to help you learn';
+}
+
+async function deleteSession(e, sid) {
+  e.stopPropagation();
+  if (!confirm('Delete this chat?')) return;
+  await fetch(`/chat/delete/${sid}/`, {method: 'GET', headers: {'X-CSRFToken': csrfToken()}});
+  document.getElementById(`session-${sid}`)?.remove();
+  if (currentSessionId === sid) {
+    currentSessionId = null;
+    document.getElementById('messages-container').innerHTML = `<div class="empty-chat" id="empty-chat"><div class="empty-chat-icon"><i class="fas fa-robot"></i></div><h3>Chat Deleted</h3><p>Start a new chat!</p></div>`;
+  }
+}
+
+function quickAsk(text) {
+  const input = document.getElementById('message-input');
+  input.value = text;
+  sendMessage();
+}
+</script>
+{% endblock %}

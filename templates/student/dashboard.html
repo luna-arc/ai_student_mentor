@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — EduBot AI{% endblock %}
+{% block page_title %}<i class="fas fa-home" style="color:var(--primary)"></i> Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.level-badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(67,232,216,0.1));border:1px solid rgba(108,99,255,0.4);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--primary)}
+.xp-bar-wrap{background:var(--bg3);border-radius:6px;height:8px;overflow:hidden;margin-top:8px;position:relative}
+.xp-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:6px;transition:width 1s ease}
+.welcome-card{background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(67,232,216,0.08));border:1px solid rgba(108,99,255,0.3);border-radius:var(--radius);padding:28px;margin-bottom:24px;display:flex;align-items:center;gap:24px}
+.welcome-avatar{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;flex-shrink:0}
+.welcome-info h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
+.welcome-info p{color:var(--text2);font-size:14px;margin-top:4px}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:var(--warning);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:600;margin-top:10px}
+.quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.quick-btn{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;text-decoration:none;color:var(--text);transition:.3s;display:block}
+.quick-btn:hover{transform:translateY(-4px);border-color:var(--color);box-shadow:0 12px 30px rgba(0,0,0,0.3)}
+.quick-btn i{font-size:24px;margin-bottom:10px;display:block;color:var(--color)}
+.quick-btn span{font-size:12px;font-weight:600}
+.reminder-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(46,48,80,0.4)}
+.reminder-item:last-child{border-bottom:none}
+.r-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.r-info{flex:1;min-width:0}
+.r-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-time{font-size:11px;color:var(--text3);margin-top:2px}
+.interview-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(46,48,80,0.4)}
+.interview-row:last-child{border-bottom:none}
+.score-circle{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.announce-item{padding:12px 16px;background:var(--bg3);border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)}
+.announce-item.warning{border-left-color:var(--warning)}
+.announce-item.success{border-left-color:var(--success)}
+.announce-title{font-size:13px;font-weight:600}
+.announce-time{font-size:11px;color:var(--text3);margin-top:4px}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-card">
+  <div class="welcome-avatar">{{ request.user.username|first|upper }}</div>
+  <div class="welcome-info" style="flex:1">
+    <h2>Welcome back, {{ request.user.first_name|default:request.user.username }}! 👋</h2>
+    <p>{{ profile.target_role|default:"Let's crush your goals today!" }}</p>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px">
+      <div class="level-badge"><i class="fas fa-star"></i> Level {{ profile.level }} — {{ profile.level_name }}</div>
+      <div class="streak-badge"><i class="fas fa-fire"></i> {{ profile.streak_days }} Day Streak</div>
+    </div>
+    <div class="xp-bar-wrap" style="max-width:300px">
+      <div class="xp-bar" style="width:{% widthratio profile.total_xp 5000 100 %}%"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">{{ profile.total_xp }} XP / 5000 XP to Master</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <div class="stat-icon blue"><i class="fas fa-comments"></i></div>
+    <div class="stat-value">{{ total_chats }}</div>
+    <div class="stat-label">Total AI Chats</div>
+  </div>
+  <div class="stat-card pink">
+    <div class="stat-icon pink"><i class="fas fa-microphone-alt"></i></div>
+    <div class="stat-value">{{ total_interviews }}</div>
+    <div class="stat-label">Interviews Done</div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-icon teal"><i class="fas fa-chart-line"></i></div>
+    <div class="stat-value">{{ avg_score }}/10</div>
+    <div class="stat-label">Avg Interview Score</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-icon gold"><i class="fas fa-trophy"></i></div>
+    <div class="stat-value">{{ profile.total_xp }}</div>
+    <div class="stat-label">Total XP Earned</div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <a href="{% url 'chatbot' %}" class="quick-btn" style="--color:#6C63FF">
+    <i class="fas fa-robot"></i><span>Ask AI Mentor</span>
+  </a>
+  <a href="{% url 'start_interview' %}" class="quick-btn" style="--color:#43E8D8">
+    <i class="fas fa-microphone-alt"></i><span>Start Interview</span>
+  </a>
+  <a href="{% url 'reminders' %}" class="quick-btn" style="--color:#F59E0B">
+    <i class="fas fa-bell"></i><span>Set Reminder</span>
+  </a>
+  <a href="{% url 'suggestions' %}" class="quick-btn" style="--color:#22D3A5">
+    <i class="fas fa-lightbulb"></i><span>AI Suggestions</span>
+  </a>
+  <a href="{% url 'progress' %}" class="quick-btn" style="--color:#FF6584">
+    <i class="fas fa-chart-bar"></i><span>My Progress</span>
+  </a>
+</div>
+
+<!-- Main Grid -->
+<div class="grid-2">
+  <!-- Announcements -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-bullhorn"></i> Announcements</div>
+    </div>
+    {% if announcements %}
+      {% for ann in announcements %}
+      <div class="announce-item {{ ann.announcement_type }}">
+        <div class="announce-title">{{ ann.title }}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">{{ ann.content|truncatechars:80 }}</div>
+        <div class="announce-time"><i class="fas fa-clock"></i> {{ ann.created_at|timesince }} ago</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><i class="fas fa-bullhorn"></i><p>No announcements yet</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming Reminders -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-bell"></i> Upcoming Reminders</div>
+      <a href="{% url 'reminders' %}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    {% if upcoming_reminders %}
+      {% for r in upcoming_reminders %}
+      <div class="reminder-item">
+        <div class="r-dot" style="background:{% if r.priority == 'high' %}var(--danger){% elif r.priority == 'medium' %}var(--warning){% else %}var(--success){% endif %}"></div>
+        <div class="r-info">
+          <div class="r-title">{{ r.title }}</div>
+          <div class="r-time"><i class="fas fa-clock"></i> {{ r.due_datetime|date:"M d, H:i" }}</div>
+        </div>
+        <span class="badge badge-{% if r.priority == 'high' %}danger{% elif r.priority == 'medium' %}warning{% else %}success{% endif %}">{{ r.priority }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><i class="fas fa-bell-slash"></i><p>No upcoming reminders</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Recent Interviews -->
+<div class="card" style="margin-top:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-microphone-alt"></i> Recent Interviews</div>
+    <a href="{% url 'interview_list' %}" class="btn btn-secondary btn-sm">View All</a>
+  </div>
+  {% if recent_interviews %}
+    {% for iv in recent_interviews %}
+    <div class="interview-row">
+      <div class="score-circle" style="background:{% if iv.overall_score and iv.overall_score >= 7 %}rgba(34,211,165,0.15){% elif iv.overall_score and iv.overall_score >= 5 %}rgba(245,158,11,0.15){% else %}rgba(239,68,68,0.15){% endif %};color:{% if iv.overall_score and iv.overall_score >= 7 %}var(--success){% elif iv.overall_score and iv.overall_score >= 5 %}var(--warning){% else %}var(--danger){% endif %}">
+        {% if iv.overall_score %}{{ iv.overall_score|floatformat:1 }}{% else %}—{% endif %}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">{{ iv.get_domain_display }}</div>
+        <div style="font-size:11px;color:var(--text3)">{{ iv.get_difficulty_display }} • {{ iv.started_at|date:"M d, Y" }}</div>
+      </div>
+      <span class="badge badge-{% if iv.status == 'completed' %}success{% elif iv.status == 'in_progress' %}warning{% else %}info{% endif %}">{{ iv.get_status_display }}</span>
+      {% if iv.status == 'completed' %}
+      <a href="{% url 'interview_result' iv.id %}" class="btn btn-secondary btn-sm">Results</a>
+      {% elif iv.status == 'in_progress' %}
+      <a href="{% url 'interview_session' iv.id %}" class="btn btn-primary btn-sm">Continue</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <i class="fas fa-microphone-slash"></i>
+      <p>No interviews yet. <a href="{% url 'start_interview' %}" style="color:var(--primary)">Start your first mock interview!</a></p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

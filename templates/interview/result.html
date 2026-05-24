@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Interview Results{% endblock %}
+{% block page_title %}<i class="fas fa-chart-bar" style="color:var(--success)"></i> Interview Results{% endblock %}
+
+{% block extra_css %}
+<style>
+.result-hero{text-align:center;background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(67,232,216,0.08));border:1px solid rgba(108,99,255,0.3);border-radius:24px;padding:40px;margin-bottom:28px}
+.big-score{font-family:'Syne',sans-serif;font-size:80px;font-weight:900;line-height:1}
+.big-score.high{background:linear-gradient(135deg,var(--success),#16a37f);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.big-score.mid{background:linear-gradient(135deg,var(--warning),#d97706);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.big-score.low{background:linear-gradient(135deg,var(--danger),#dc2626);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.grade-label{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-top:8px}
+.result-meta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.meta-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text2)}
+.q-result-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:16px;transition:.2s}
+.q-result-card:hover{border-color:rgba(108,99,255,0.3)}
+.q-header{display:flex;align-items:center;gap:14px;margin-bottom:14px;cursor:pointer}
+.q-score-badge{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:18px;font-weight:900;flex-shrink:0}
+.q-num-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.q-text-preview{font-size:14px;font-weight:600;flex:1}
+.q-expand-icon{color:var(--text3);transition:.3s}
+.q-details{display:none;border-top:1px solid var(--border);padding-top:16px;margin-top:14px}
+.q-details.open{display:block}
+.detail-section{margin-bottom:14px}
+.detail-section h5{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.detail-item{font-size:13px;color:var(--text2);padding:4px 0;display:flex;gap:8px;align-items:flex-start}
+.score-bars{display:flex;gap:4px;margin:12px 0}
+.score-bar-item{flex:1;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:.3s}
+.answer-text{background:var(--bg3);border-radius:10px;padding:12px;font-size:13px;color:var(--text2);border-left:3px solid var(--primary);line-height:1.6}
+</style>
+{% endblock %}
+
+{% block content %}
+{% with score=interview.overall_score %}
+<div class="result-hero">
+  <div style="font-size:14px;color:var(--text2);font-weight:600;margin-bottom:12px">{{ interview.get_domain_display }} — {{ interview.get_difficulty_display }} Interview</div>
+  <div class="big-score {% if score and score >= 7 %}high{% elif score and score >= 5 %}mid{% else %}low{% endif %}">
+    {{ score|floatformat:1|default:"—" }}
+    <span style="font-size:32px">/10</span>
+  </div>
+  <div class="grade-label">
+    {% if score and score >= 8 %}🏆 Excellent Performance!
+    {% elif score and score >= 6 %}👍 Good Performance
+    {% elif score and score >= 4 %}📈 Average — Keep Practicing
+    {% else %}💪 Needs Improvement
+    {% endif %}
+  </div>
+  <div class="result-meta">
+    <div class="meta-item"><i class="fas fa-question-circle" style="color:var(--primary)"></i> {{ questions.count }} Questions</div>
+    <div class="meta-item"><i class="fas fa-calendar" style="color:var(--accent)"></i> {{ interview.started_at|date:"M d, Y" }}</div>
+    <div class="meta-item"><i class="fas fa-signal" style="color:var(--warning)"></i> {{ interview.get_difficulty_display }}</div>
+    {% if interview.completed_at %}
+    <div class="meta-item"><i class="fas fa-clock" style="color:var(--success)"></i> {{ interview.started_at|timesince:interview.completed_at }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+  <a href="{% url 'start_interview' %}" class="btn btn-primary"><i class="fas fa-redo"></i> Try Again</a>
+  <a href="{% url 'interview_list' %}" class="btn btn-secondary"><i class="fas fa-list"></i> All Interviews</a>
+  <a href="{% url 'suggestions' %}" class="btn btn-secondary"><i class="fas fa-lightbulb"></i> Get Improvement Tips</a>
+</div>
+
+<h3 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:16px">Question-by-Question Breakdown</h3>
+
+{% for q in questions %}
+<div class="q-result-card">
+  <div class="q-header" onclick="toggleQ({{ forloop.counter }})">
+    <div class="q-score-badge" style="background:{% if q.score and q.score >= 7 %}rgba(34,211,165,0.15){% elif q.score and q.score >= 5 %}rgba(245,158,11,0.15){% else %}rgba(239,68,68,0.15){% endif %};color:{% if q.score and q.score >= 7 %}var(--success){% elif q.score and q.score >= 5 %}var(--warning){% else %}var(--danger){% endif %}">
+      {{ q.score|floatformat:0|default:"?" }}
+    </div>
+    <div style="flex:1">
+      <div class="q-num-label">Question {{ q.question_number }}</div>
+      <div class="q-text-preview">{{ q.question_text|truncatechars:80 }}</div>
+    </div>
+    <i class="fas fa-chevron-down q-expand-icon" id="icon-{{ forloop.counter }}"></i>
+  </div>
+  <div class="q-details" id="qd-{{ forloop.counter }}">
+    <div class="detail-section">
+      <h5 style="color:var(--text2)"><i class="fas fa-question"></i> Full Question</h5>
+      <div class="answer-text" style="border-left-color:var(--accent)">{{ q.question_text }}</div>
+    </div>
+    {% if q.user_answer %}
+    <div class="detail-section">
+      <h5 style="color:var(--primary)"><i class="fas fa-user"></i> Your Answer</h5>
+      <div class="answer-text">{{ q.user_answer }}</div>
+    </div>
+    {% endif %}
+    {% if q.feedback %}
+    <div class="detail-section">
+      <h5 style="color:var(--text2)"><i class="fas fa-comment-alt"></i> AI Feedback</h5>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;padding:10px;background:var(--bg3);border-radius:10px">{{ q.feedback }}</div>
+    </div>
+    {% endif %}
+    {% if q.tips_list %}
+    <div class="detail-section">
+      <h5 style="color:var(--warning)"><i class="fas fa-lightbulb"></i> Improvement Tips</h5>
+      {% for tip in q.tips_list %}
+      <div class="detail-item"><i class="fas fa-arrow-right" style="color:var(--primary);margin-top:2px;flex-shrink:0"></i> {{ tip }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleQ(n) {
+  const d = document.getElementById(`qd-${n}`);
+  const i = document.getElementById(`icon-${n}`);
+  d.classList.toggle('open');
+  i.style.transform = d.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+</script>
+{% endblock %}

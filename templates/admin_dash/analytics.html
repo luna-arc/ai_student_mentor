@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}<i class="fas fa-chart-line" style="color:var(--accent)"></i> Platform Analytics{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fas fa-user-plus"></i> Student Registrations (30 Days)</div></div>
+    <div style="height:220px;position:relative"><canvas id="reg-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fas fa-microphone-alt"></i> Interviews by Domain</div></div>
+    <div style="height:220px;position:relative"><canvas id="domain-chart"></canvas></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fas fa-table"></i> Interview Domain Performance</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Domain</th><th>Total Interviews</th><th>Avg Score</th></tr></thead>
+      <tbody>
+        {% for d in interview_domains %}
+        <tr>
+          <td><strong>{{ d.domain|title|replace:"_":" " }}</strong></td>
+          <td><span class="badge badge-primary">{{ d.count }}</span></td>
+          <td>
+            {% if d.avg_score %}
+            <span style="font-weight:700;color:{% if d.avg_score >= 7 %}var(--success){% elif d.avg_score >= 5 %}var(--warning){% else %}var(--danger){% endif %}">
+              {{ d.avg_score|floatformat:1 }}/10
+            </span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:32px">No interview data yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('reg-chart'), {
+  type: 'bar',
+  data: {
+    labels: {{ reg_labels|safe }},
+    datasets: [{
+      label: 'Registrations',
+      data: {{ reg_data|safe }},
+      backgroundColor: 'rgba(108,99,255,0.6)',
+      borderColor: '#6C63FF',
+      borderWidth: 2,
+      borderRadius: 6
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#6B6F8E', font: { size: 10 } }, grid: { color: 'rgba(46,48,80,0.4)' } },
+      y: { ticks: { color: '#6B6F8E', font: { size: 10 } }, grid: { color: 'rgba(46,48,80,0.4)' } }
+    }
+  }
+});
+
+const domains = {{ interview_domains|safe }};
+new Chart(document.getElementById('domain-chart'), {
+  type: 'doughnut',
+  data: {
+    labels: domains.map(d => d.domain.replace(/_/g,' ')),
+    datasets: [{ data: domains.map(d=>d.count), backgroundColor: ['#6C63FF','#43E8D8','#FF6584','#F59E0B','#22D3A5','#A78BFA','#34D399'], borderWidth: 2, borderColor: '#1E2035' }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { color: '#9FA3CC', font: { size: 11, family: 'Space Grotesk' }, padding: 10 } } },
+    cutout: '60%'
+  }
+});
+</script>
+{% endblock %}

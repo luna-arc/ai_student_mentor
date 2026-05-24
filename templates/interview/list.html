@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}My Interviews{% endblock %}
+{% block page_title %}<i class="fas fa-microphone-alt" style="color:var(--accent)"></i> My Interviews{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+  <div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Interview History</h2>
+    <p style="color:var(--text2);font-size:14px;margin-top:4px">Track your mock interview performance</p>
+  </div>
+  <a href="{% url 'start_interview' %}" class="btn btn-primary"><i class="fas fa-plus"></i> New Interview</a>
+</div>
+
+{% if interviews %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Domain</th><th>Difficulty</th><th>Score</th><th>Questions</th><th>Date</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for iv in interviews %}
+        <tr>
+          <td><strong>{{ iv.get_domain_display }}</strong></td>
+          <td>
+            <span class="badge {% if iv.difficulty == 'easy' %}badge-success{% elif iv.difficulty == 'medium' %}badge-warning{% else %}badge-danger{% endif %}">
+              {{ iv.get_difficulty_display }}
+            </span>
+          </td>
+          <td>
+            {% if iv.overall_score %}
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:{% if iv.overall_score >= 7 %}var(--success){% elif iv.overall_score >= 5 %}var(--warning){% else %}var(--danger){% endif %}">
+              {{ iv.overall_score|floatformat:1 }}/10
+            </span>
+            {% else %}<span style="color:var(--text3)">—</span>{% endif %}
+          </td>
+          <td>{{ iv.questions.count }}/7</td>
+          <td style="color:var(--text2);font-size:12px">{{ iv.started_at|date:"M d, Y H:i" }}</td>
+          <td>
+            <span class="badge {% if iv.status == 'completed' %}badge-success{% elif iv.status == 'in_progress' %}badge-warning{% else %}badge-info{% endif %}">
+              {{ iv.get_status_display }}
+            </span>
+          </td>
+          <td>
+            {% if iv.status == 'completed' %}
+            <a href="{% url 'interview_result' iv.id %}" class="btn btn-secondary btn-sm"><i class="fas fa-chart-bar"></i> Results</a>
+            {% elif iv.status == 'in_progress' %}
+            <a href="{% url 'interview_session' iv.id %}" class="btn btn-primary btn-sm"><i class="fas fa-play"></i> Continue</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <i class="fas fa-microphone-slash"></i>
+    <p style="font-size:16px;font-weight:600;margin-top:8px">No interviews yet</p>
+    <p>Start your first mock interview to begin your practice journey!</p>
+    <a href="{% url 'start_interview' %}" class="btn btn-primary" style="margin-top:16px"><i class="fas fa-play"></i> Start First Interview</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

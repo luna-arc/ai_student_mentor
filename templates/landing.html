@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduBot AI — Your Intelligent Academic Mentor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6C63FF;--a:#43E8D8;--s:#FF6584;--bg:#0D0E1A;--card:#1E2035;--border:#2E3050;--text:#E8EAFF;--text2:#9FA3CC}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 15%,rgba(108,99,255,0.12),transparent 50%),radial-gradient(ellipse at 85% 85%,rgba(67,232,216,0.08),transparent 50%);pointer-events:none}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 8%;display:flex;align-items:center;gap:12px;backdrop-filter:blur(20px);background:rgba(13,14,26,0.8);border-bottom:1px solid rgba(46,48,80,0.5)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--p),var(--a));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.brand-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--p),var(--a));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-spacer{flex:1}
+.nav-link{color:var(--text2);text-decoration:none;font-size:14px;font-weight:500;padding:8px 16px;border-radius:8px;transition:.2s}
+.nav-link:hover{color:var(--text);background:rgba(108,99,255,0.1)}
+.btn-nav{background:linear-gradient(135deg,var(--p),#5A52E0);color:#fff;padding:9px 20px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:.2s;box-shadow:0 4px 15px rgba(108,99,255,0.3)}
+.btn-nav:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,99,255,0.4)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 8% 80px;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:20px;padding:6px 16px;font-size:13px;color:var(--p);font-weight:600;margin-bottom:28px;animation:fadeInDown .6s ease}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(40px,6vw,80px);font-weight:900;line-height:1.05;margin-bottom:24px;animation:fadeInUp .7s ease}
+.gradient-text{background:linear-gradient(135deg,var(--p),var(--a));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:clamp(15px,2vw,19px);color:var(--text2);max-width:620px;margin:0 auto 40px;line-height:1.7;animation:fadeInUp .8s ease}
+.hero-buttons{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeInUp .9s ease}
+.btn-hero{display:inline-flex;align-items:center;gap:10px;padding:14px 32px;border-radius:14px;font-size:15px;font-weight:700;text-decoration:none;transition:.3s;font-family:inherit}
+.btn-hero-primary{background:linear-gradient(135deg,var(--p),var(--a));color:#fff;box-shadow:0 8px 30px rgba(108,99,255,0.4)}
+.btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(108,99,255,0.5)}
+.btn-hero-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-hero-outline:hover{border-color:var(--p);color:var(--p);background:rgba(108,99,255,0.05)}
+
+/* Floating cards */
+.hero-visual{position:relative;margin-top:60px;max-width:800px;margin-left:auto;margin-right:auto}
+.floating-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.float-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:14px;min-width:180px;animation:float var(--dur,3s) ease-in-out infinite alternate}
+.float-card:nth-child(2){--dur:3.5s}
+.float-card:nth-child(3){--dur:2.8s}
+.float-card:nth-child(4){--dur:3.2s}
+@keyframes float{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.fc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.fc-icon.p{background:rgba(108,99,255,0.15);color:var(--p)}
+.fc-icon.a{background:rgba(67,232,216,0.15);color:var(--a)}
+.fc-icon.s{background:rgba(255,101,132,0.15);color:var(--s)}
+.fc-icon.g{background:rgba(245,158,11,0.15);color:#F59E0B}
+.fc-text{font-size:13px;font-weight:600}
+.fc-sub{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* Features */
+.features{padding:100px 8%;position:relative;z-index:1}
+.section-head{text-align:center;margin-bottom:60px}
+.section-head h2{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,46px);font-weight:800;margin-bottom:16px}
+.section-head p{color:var(--text2);font-size:16px;max-width:500px;margin:0 auto}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;transition:.3s;position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--color,var(--p)),transparent);opacity:0;transition:.3s;border-radius:20px}
+.feature-card:hover{transform:translateY(-6px);border-color:var(--color,var(--p));box-shadow:0 20px 50px rgba(0,0,0,0.3)}
+.feature-card:hover::before{opacity:0.04}
+.feature-icon{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px;background:rgba(108,99,255,0.15);color:var(--color,var(--p))}
+.feature-card h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:10px}
+.feature-card p{font-size:13px;color:var(--text2);line-height:1.7}
+
+/* Stats bar */
+.stats-bar{background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:40px 8%;display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+.sbar-val{font-family:'Syne',sans-serif;font-size:36px;font-weight:900;background:linear-gradient(135deg,var(--p),var(--a));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sbar-label{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* CTA */
+.cta{padding:100px 8%;text-align:center}
+.cta-card{background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(67,232,216,0.08));border:1px solid rgba(108,99,255,0.3);border-radius:28px;padding:70px 48px;max-width:700px;margin:0 auto}
+.cta h2{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;margin-bottom:16px}
+.cta p{color:var(--text2);margin-bottom:36px;font-size:16px}
+
+footer{padding:24px 8%;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2)}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.stats-bar{grid-template-columns:1fr 1fr}.floating-cards{display:none}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="brand" href="{% url 'landing' %}">
+    <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+    <span class="brand-name">EduBot AI</span>
+  </a>
+  <div class="nav-spacer"></div>
+  <a href="#features" class="nav-link">Features</a>
+  <a href="{% url 'login' %}" class="nav-link">Login</a>
+  <a href="{% url 'register' %}" class="btn-nav">Get Started Free</a>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="hero-badge"><i class="fas fa-sparkles"></i> Powered by Groq LLM</div>
+    <h1>Your Personal<br><span class="gradient-text">AI Academic Mentor</span></h1>
+    <p>Master your subjects, ace interviews, and track your growth with an intelligent AI mentor that adapts to your learning style and goals.</p>
+    <div class="hero-buttons">
+      <a href="{% url 'register' %}" class="btn-hero btn-hero-primary"><i class="fas fa-rocket"></i> Start Learning Free</a>
+      <a href="{% url 'login' %}" class="btn-hero btn-hero-outline"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+    </div>
+    <div class="hero-visual">
+      <div class="floating-cards">
+        <div class="float-card"><div class="fc-icon p"><i class="fas fa-robot"></i></div><div><div class="fc-text">AI Chat Mentor</div><div class="fc-sub">24/7 Available</div></div></div>
+        <div class="float-card"><div class="fc-icon a"><i class="fas fa-microphone-alt"></i></div><div><div class="fc-text">Mock Interviews</div><div class="fc-sub">AI Evaluated</div></div></div>
+        <div class="float-card"><div class="fc-icon s"><i class="fas fa-chart-line"></i></div><div><div class="fc-text">Progress Track</div><div class="fc-sub">Real-time XP</div></div></div>
+        <div class="float-card"><div class="fc-icon g"><i class="fas fa-bell"></i></div><div><div class="fc-text">Smart Reminders</div><div class="fc-sub">Never Miss Out</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div><div class="sbar-val">10K+</div><div class="sbar-label">Students Trained</div></div>
+  <div><div class="sbar-val">50K+</div><div class="sbar-label">Interviews Simulated</div></div>
+  <div><div class="sbar-val">95%</div><div class="sbar-label">Satisfaction Rate</div></div>
+  <div><div class="sbar-val">100+</div><div class="sbar-label">Domains Covered</div></div>
+</div>
+
+<section class="features" id="features">
+  <div class="section-head">
+    <h2>Everything You Need to <span class="gradient-text">Succeed</span></h2>
+    <p>A complete AI-powered academic platform built for students who want to excel</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card" style="--color:#6C63FF">
+      <div class="feature-icon" style="background:rgba(108,99,255,0.15)"><i class="fas fa-robot"></i></div>
+      <h3>AI Academic Query System</h3>
+      <p>Ask anything about your subjects and get detailed, accurate answers powered by Groq's LLM. Supports all academic domains.</p>
+    </div>
+    <div class="feature-card" style="--color:#43E8D8">
+      <div class="feature-icon" style="background:rgba(67,232,216,0.15);color:#43E8D8"><i class="fas fa-microphone-alt"></i></div>
+      <h3>Smart Interview Preparation</h3>
+      <p>Practice with domain-specific interview questions, get instant AI feedback, and improve your answers with personalized tips.</p>
+    </div>
+    <div class="feature-card" style="--color:#FF6584">
+      <div class="feature-icon" style="background:rgba(255,101,132,0.15);color:#FF6584"><i class="fas fa-video"></i></div>
+      <h3>Avatar-Based Mock Interview</h3>
+      <p>Experience a realistic interview simulation with an AI avatar interviewer — just like the screenshots above. Camera-enabled.</p>
+    </div>
+    <div class="feature-card" style="--color:#F59E0B">
+      <div class="feature-icon" style="background:rgba(245,158,11,0.15);color:#F59E0B"><i class="fas fa-star"></i></div>
+      <h3>Answer Evaluation & Scoring</h3>
+      <p>Every answer you give is scored 0-10 with strengths, weaknesses, improvement tips, and model answer hints.</p>
+    </div>
+    <div class="feature-card" style="--color:#22D3A5">
+      <div class="feature-icon" style="background:rgba(34,211,165,0.15);color:#22D3A5"><i class="fas fa-bell"></i></div>
+      <h3>Smart Reminder System</h3>
+      <p>Set study reminders, assignment deadlines, and interview practice sessions. AI suggests optimal study times.</p>
+    </div>
+    <div class="feature-card" style="--color:#A78BFA">
+      <div class="feature-icon" style="background:rgba(167,139,250,0.15);color:#A78BFA"><i class="fas fa-chart-bar"></i></div>
+      <h3>Progress Tracking & XP</h3>
+      <p>Track your daily learning streak, earn XP points, level up, and visualize your progress with beautiful charts.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="cta-card">
+    <h2>Ready to <span class="gradient-text">Transform</span> Your Learning?</h2>
+    <p>Join thousands of students who are already using EduBot AI to get better grades and land their dream jobs.</p>
+    <a href="{% url 'register' %}" class="btn-hero btn-hero-primary" style="font-size:16px;padding:16px 40px"><i class="fas fa-rocket"></i> Create Free Account</a>
+  </div>
+</section>
+
+<footer>
+  <span><i class="fas fa-graduation-cap" style="color:#6C63FF"></i> EduBot AI © 2026</span>
+  <span>Built with Django + Groq LLM</span>
+</footer>
+</body>
+</html>

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}AI Suggestions{% endblock %}
+{% block page_title %}<i class="fas fa-lightbulb" style="color:var(--warning)"></i> Personalized AI Suggestions{% endblock %}
+
+{% block extra_css %}
+<style>
+.sug-hero{background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(108,99,255,0.08));border:1px solid rgba(245,158,11,0.3);border-radius:20px;padding:28px;margin-bottom:24px;display:flex;align-items:center;gap:20px}
+.sug-icon{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--warning),#d97706);display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;flex-shrink:0}
+.readiness-circle{width:90px;height:90px;border-radius:50%;background:conic-gradient(var(--success) var(--pct),var(--bg3) 0);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.readiness-inner{position:absolute;inset:8px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.skill-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.25);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--primary);margin:4px}
+.study-day{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;gap:14px;align-items:flex-start}
+.day-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
+.resource-item{display:flex;align-items:center;gap:14px;padding:12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)}
+.res-type-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.goal-item{padding:10px 16px;background:var(--bg3);border-radius:10px;border-left:3px solid var(--accent);margin-bottom:8px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:10px}
+.refresh-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;text-decoration:none}
+.refresh-btn:hover{border-color:var(--primary);color:var(--primary)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap">
+  <div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px">Your Personalized Roadmap</h2>
+    <p style="color:var(--text2);font-size:13px">AI-generated study plan based on your profile & performance</p>
+  </div>
+  <div style="flex:1"></div>
+  <a href="{% url 'suggestions' %}" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh Suggestions</a>
+</div>
+
+{% if error %}
+<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Could not connect to AI service: {{ error }}. Please add your Groq API key in settings.py</div>
+{% endif %}
+
+{% if suggestion_data %}
+<!-- Hero: readiness + motivation -->
+<div class="sug-hero">
+  <div class="sug-icon"><i class="fas fa-lightbulb"></i></div>
+  <div style="flex:1">
+    <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px">{{ suggestion_data.motivational_message }}</h3>
+    <p style="color:var(--text2);font-size:13px">Target Role: <strong>{{ profile.target_role|default:"Not set" }}</strong> | Level: <strong>{{ profile.skill_level|title }}</strong></p>
+  </div>
+  {% if suggestion_data.estimated_readiness %}
+  <div>
+    <div class="readiness-circle" style="--pct:{{ suggestion_data.estimated_readiness }}% 100%">
+      <div class="readiness-inner">
+        <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:900;color:var(--success)">{{ suggestion_data.estimated_readiness }}%</span>
+        <span style="font-size:9px;color:var(--text3)">Ready</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="grid-2" style="margin-bottom:20px">
+  <!-- Priority Skills -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-bullseye"></i> Priority Skills to Learn</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">
+      {% for skill in suggestion_data.priority_skills %}
+      <span class="skill-chip"><i class="fas fa-star"></i> {{ skill }}</span>
+      {% endfor %}
+    </div>
+    {% if suggestion_data.priority_skills %}
+    <div style="margin-top:16px">
+      <a href="{% url 'chatbot' %}" class="btn btn-primary btn-sm"><i class="fas fa-robot"></i> Ask AI about these skills</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Weekly Goals -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-flag"></i> This Week's Goals</div>
+    </div>
+    {% for goal in suggestion_data.weekly_goals %}
+    <div class="goal-item"><i class="fas fa-chevron-right" style="color:var(--accent);font-size:11px"></i> {{ goal }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Study Plan -->
+{% if suggestion_data.study_plan %}
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-calendar-check"></i> Personalized Study Plan</div>
+    <a href="{% url 'reminders' %}" class="btn btn-secondary btn-sm"><i class="fas fa-bell"></i> Set Reminders</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:4px">
+    {% for day in suggestion_data.study_plan %}
+    <div class="study-day">
+      <div class="day-num">{{ day.day }}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600">{{ day.task }}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px"><i class="fas fa-clock"></i> {{ day.duration }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Resources -->
+{% if suggestion_data.resources %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-book-open"></i> Recommended Resources</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:4px">
+    {% for res in suggestion_data.resources %}
+    <div class="resource-item">
+      <div class="res-type-icon" style="background:{% if res.type == 'book' %}rgba(108,99,255,0.15){% elif res.type == 'video' %}rgba(239,68,68,0.15){% elif res.type == 'course' %}rgba(67,232,216,0.15){% else %}rgba(245,158,11,0.15){% endif %}">
+        {% if res.type == 'book' %}<i class="fas fa-book" style="color:var(--primary)"></i>
+        {% elif res.type == 'video' %}<i class="fas fa-video" style="color:var(--danger)"></i>
+        {% elif res.type == 'course' %}<i class="fas fa-graduation-cap" style="color:var(--accent)"></i>
+        {% else %}<i class="fas fa-globe" style="color:var(--warning)"></i>{% endif %}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ res.title }}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">{{ res.type|title }} • {{ res.url_hint }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+  <div class="empty-state" style="padding:60px">
+    <i class="fas fa-robot"></i>
+    <p style="font-size:16px;font-weight:600;margin-top:10px">AI Suggestions Loading...</p>
+    <p style="margin-top:6px">Complete your profile and add your Groq API key to get personalized AI suggestions.</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:20px">
+      <a href="{% url 'profile' %}" class="btn btn-primary"><i class="fas fa-user"></i> Complete Profile</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
